@@ -1,0 +1,22 @@
+<Project>
+
+  <!-- Applies to every project under this directory (src and tests). -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+
+    <!-- Make .editorconfig style rules (var, K&R braces, naming...) part of the build, not just the IDE. -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+
+    <!-- Locally: warnings stay warnings (easy to experiment). In CI: warnings fail the build. -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true' Or '$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+
+    <!-- Report known vulnerabilities in dependencies, but don't let a newly published advisory break an unrelated build. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+  </PropertyGroup>
+
+</Project>
