@@ -17,12 +17,12 @@ You can write a PID into a file however you want but sometimes it's important to
 make sure another instance of the program or result of a power outage etc.
 doesn't courrupt the PID file. The solution is in this library.
 
-[![CI](https://github.com/muhammednlfrk/pidfile/actions/workflows/ci.yml/badge.svg)](https://github.com/<USER>/pidfile/actions/workflows/ci.yml)
+[![CI](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml)
 
 ## Installation
 
 ```bash
-dotnet add package PidFile
+dotnet add package PidFile.NET
 ```
 
 Targets `netstandard2.1` (.NET Core 3.0+, .NET 5+, Mono, Unity 2021.2+). .NET
@@ -37,7 +37,7 @@ Framework is not supported.
 ## Building from source
 
 ```bash
-git clone https://github.com/muhammednlfrk/pidfile.git
+git clone https://github.com/muhammednlfrk/pidfile-dotnet.git
 cd pidfile
 dotnet build
 dotnet test

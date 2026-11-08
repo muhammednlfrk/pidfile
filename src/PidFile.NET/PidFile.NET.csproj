@@ -2,8 +2,6 @@
     <PropertyGroup>
         <!-- Build args. -->
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Nullable>enable</Nullable>
-        <LangVersion>8.0</LangVersion>
         <AssemblyName>PidFile.NET</AssemblyName>
         <RootNamespace>PidFile.NET</RootNamespace>
 

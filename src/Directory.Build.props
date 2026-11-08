@@ -1,23 +1,20 @@
 <Project>
+  <Import
+    Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- MSBuild uses only the NEAREST Directory.Build.props, so import the root one explicitly. -->
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
-
-  <!-- Library-only settings (not applied to tests). -->
   <PropertyGroup>
-    <!-- Pin the language version: netstandard2.1 default is C# 8.0; don't let it drift to 'latest'. -->
     <LangVersion>8.0</LangVersion>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
-    <!-- Checks binary compatibility of the package (add PackageValidationBaselineVersion after the first release). -->
     <EnablePackageValidation>true</EnablePackageValidation>
 
-    <!-- SourceLink + symbol package so consumers can step into your source. -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  </PropertyGroup>
 
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+  </PropertyGroup>
 </Project>
