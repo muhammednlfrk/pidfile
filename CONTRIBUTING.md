@@ -31,7 +31,7 @@ there.
 
 ## Public API changes
 
-The public API surface is tracked in `src/PidFile/PublicAPI.Shipped.txt` and
+The public API surface is tracked in `src/PidFile.NET/PublicAPI.Shipped.txt` and
 `PublicAPI.Unshipped.txt`.
 Any new public member must be added to `PublicAPI.Unshipped.txt` (the IDE quick
 fix for `RS0016` does this).

@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/PidFile/PidFile.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/PidFile.Tests/PidFile.Tests.csproj" />
-  </Folder>
-</Solution>

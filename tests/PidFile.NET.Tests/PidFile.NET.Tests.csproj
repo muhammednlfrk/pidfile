@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PidFile\PidFile.csproj" />
+    <ProjectReference Include="..\..\src\PidFile.NET\PidFile.NET.csproj" />
   </ItemGroup>
 
 </Project>

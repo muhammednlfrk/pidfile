@@ -4,14 +4,16 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>8.0</LangVersion>
+        <AssemblyName>PidFile.NET</AssemblyName>
+        <RootNamespace>PidFile.NET</RootNamespace>
 
         <!-- Package metadata. -->
-        <PackageId>PidFile</PackageId>
+        <PackageId>PidFile.NET</PackageId>
         <Authors>Muhammed Nilifirka</Authors>
         <Description>Crate and manage your pid files.</Description>
         <PackageTags>pidfile;pid;process</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RepositoryUrl>https://github.com/muhammednlfrk/pidfile</RepositoryUrl>
+        <RepositoryUrl>https://github.com/muhammednlfrk/pidfile-dotnet</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
@@ -28,8 +30,8 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="MinVer">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
         </PackageReference>
     </ItemGroup>
     <ItemGroup>

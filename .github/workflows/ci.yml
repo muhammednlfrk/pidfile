@@ -64,7 +64,7 @@ jobs:
           global-json-file: global.json
 
       - name: Pack
-        run: dotnet pack src/PidFile -c Release -o artifacts
+        run: dotnet pack src/PidFile.NET -c Release -o artifacts
 
       - uses: actions/upload-artifact@v7
         with:
