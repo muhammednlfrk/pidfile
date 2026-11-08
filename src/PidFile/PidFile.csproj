@@ -7,7 +7,6 @@
 
         <!-- Package metadata. -->
         <PackageId>PidFile</PackageId>
-        <VersionPrefix>0.1.0</VersionPrefix>
         <Authors>Muhammed Nilifirka</Authors>
         <Description>Crate and manage your pid files.</Description>
         <PackageTags>pidfile;pid;process</PackageTags>
@@ -27,6 +26,10 @@
         <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="MinVer">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
         </PackageReference>
     </ItemGroup>
     <ItemGroup>
