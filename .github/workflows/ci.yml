@@ -48,7 +48,7 @@ jobs:
       - name: Test
         run: dotnet test -c Release --no-build
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
