@@ -1,0 +1,22 @@
+version: 2
+
+updates:
+  # NuGet packages (reads Directory.Packages.props for central package versions)
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # One PR for all minor/patch bumps instead of one PR per package.
+      nuget-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Versions of the actions used in .github/workflows (checkout, setup-dotnet, ...)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
