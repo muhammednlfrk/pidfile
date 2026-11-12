@@ -78,7 +78,7 @@ namespace PidFile.NET {
     }
 
     /// <summary>
-    /// Single-instance guard backed by ONE text file.
+    /// Single-instance guard backed by one text file.
     /// </summary>
     /// <remarks>
     /// <para>

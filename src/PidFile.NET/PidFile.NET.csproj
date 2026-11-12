@@ -8,7 +8,7 @@
         <!-- Package metadata. -->
         <PackageId>PidFile.NET</PackageId>
         <Authors>Muhammed Nilifirka</Authors>
-        <Description>Crate and manage your pid files.</Description>
+        <Description>Create and manage your PID files.</Description>
         <PackageTags>pidfile;pid;process</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/muhammednlfrk/pidfile-dotnet</RepositoryUrl>

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in PidFile!
+Thanks for your interest in PidFile.NET!
 
 ## Setup
 
