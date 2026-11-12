@@ -88,9 +88,11 @@ namespace PidFile.NET {
     /// <c>read pid &lt; file</c>) work as usual.
     /// </para>
     /// <para>
-    /// Ownership is a byte-range lock on a single byte far beyond the record,
-    /// so the record itself stays readable by every process on every
-    /// platform. The kernel releases the lock when the owner dies.
+    /// Ownership is a byte-range lock on a single byte far beyond the record
+    /// where supported. macOS uses an advisory whole-file lock because
+    /// FileStream byte-range locks are not supported there. The record stays
+    /// readable by every process, and the kernel releases the lock when the
+    /// owner dies.
     /// </para>
     /// <para>
     /// Do not open and close the PID file with your own code inside the
@@ -128,6 +130,7 @@ namespace PidFile.NET {
 
         private bool _disposed;
         private FileStream? _fs;
+        private bool _usesNativeLock;
 
         /// <summary>
         /// Initializes a new instance for the current process.
@@ -242,16 +245,10 @@ namespace PidFile.NET {
                         share: FileShare.ReadWrite | FileShare.Delete,
                         bufferSize: BUFFER_SIZE);
 
-                    try {
-                        fs.Lock(LOCK_POSITION, LOCK_LENGTH);
-                    } catch (IOException) {
-                        // The file opened fine, so a failure of Lock itself
-                        // means the byte is locked by another process.
-                        return false;
-                    } catch (UnauthorizedAccessException) {
-                        // Some platforms report a lock conflict this way.
+                    if (!tryLock(fs)) {
                         return false;
                     }
+                    _usesNativeLock = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
                     // We hold the lock: whatever the file contained is stale.
                     writeRecord(fs);
@@ -340,13 +337,10 @@ namespace PidFile.NET {
                     // owner and fails verification anyway.
                 }
 
-                try {
-                    fs.Unlock(LOCK_POSITION, LOCK_LENGTH);
-                } catch (IOException) {
-                    // Closing the stream releases the lock anyway.
-                }
+                unlock(fs);
             } finally {
                 _fs = null;
+                _usesNativeLock = false;
                 fs.Dispose();
 
                 // Unregister only after the descriptor is closed. Otherwise
@@ -369,6 +363,58 @@ namespace PidFile.NET {
             fs.Write(bytes, 0, bytes.Length);
             fs.SetLength(bytes.Length);
             fs.Flush(flushToDisk: true);
+        }
+
+        private static bool tryLock(FileStream fs) {
+            try {
+                fs.Lock(LOCK_POSITION, LOCK_LENGTH);
+                return true;
+            } catch (IOException) {
+                // The file opened fine, so a failure of Lock itself means the
+                // byte is locked by another process.
+                return false;
+            } catch (UnauthorizedAccessException) {
+                // Some platforms report a lock conflict this way.
+                return false;
+            } catch (PlatformNotSupportedException) when (
+                RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                return tryNativeLock(fs);
+            }
+        }
+
+        private static bool tryNativeLock(FileStream fs) {
+            int result = flock(
+                fs.SafeFileHandle.DangerousGetHandle(),
+                LOCK_EX | LOCK_NB);
+            if (result == 0) {
+                return true;
+            }
+
+            int error = Marshal.GetLastWin32Error();
+            if (error == EWOULDBLOCK) {
+                return false;
+            }
+
+            throw new IOException(
+                "The PID file could not be locked.",
+                new Win32Exception(error));
+        }
+
+        private void unlock(FileStream fs) {
+            if (_usesNativeLock) {
+                if (flock(
+                    fs.SafeFileHandle.DangerousGetHandle(),
+                    LOCK_UN) != 0) {
+                    // Closing the stream releases the lock anyway.
+                }
+                return;
+            }
+
+            try {
+                fs.Unlock(LOCK_POSITION, LOCK_LENGTH);
+            } catch (IOException) {
+                // Closing the stream releases the lock anyway.
+            }
         }
 
         private byte[] readRecordBytes() {
@@ -507,6 +553,14 @@ namespace PidFile.NET {
                 ? StringComparer.OrdinalIgnoreCase
                 : StringComparer.Ordinal;
         }
+
+        private const int LOCK_EX = 2;
+        private const int LOCK_NB = 4;
+        private const int LOCK_UN = 8;
+        private const int EWOULDBLOCK = 35;
+
+        [DllImport("libc", EntryPoint = "flock", SetLastError = true)]
+        private static extern int flock(IntPtr fileDescriptor, int operation);
 
         // DirectoryNotFoundException & co. derive from IOException but mean
         // "bad path", not "transient I/O problem". Do not swallow them.
