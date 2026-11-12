@@ -89,10 +89,10 @@ namespace PidFile.NET {
     /// </para>
     /// <para>
     /// Ownership is a byte-range lock on a single byte far beyond the record
-    /// where supported. macOS uses an advisory whole-file lock because
+    /// where supported. macOS uses an exclusive sidecar lock file because
     /// FileStream byte-range locks are not supported there. The record stays
-    /// readable by every process, and the kernel releases the lock when the
-    /// owner dies.
+    /// readable by every process, and the operating system releases the lock
+    /// when the owner dies.
     /// </para>
     /// <para>
     /// Do not open and close the PID file with your own code inside the
@@ -112,25 +112,23 @@ namespace PidFile.NET {
 
         // Two lines: up to 10 digits + up to 19 digits + line endings.
         private const int MAX_RECORD_BYTES = 64;
-        private const int RECORD_LINES = 2;
+        private const int RECORD_LINE_COUNT = 2;
 
-        private static readonly TimeSpan DEFAULT_TOLERANCE = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan s_defaultTolerance = TimeSpan.FromSeconds(2);
 
         // Unix fcntl locks are per-process: two instances in the same process
         // would not exclude each other. This registry covers that case.
-        // Lock order: _lock -> REGISTRY_GATE. Never the reverse.
-        private static readonly object REGISTRY_GATE = new object();
-        private static readonly Dictionary<string, PidFile> OWNERS =
-            new Dictionary<string, PidFile>(pathComparer());
+        // Lock order: _syncRoot -> s_registryGate. Never the reverse.
+        private static readonly object s_registryGate = new object();
+        private static readonly Dictionary<string, PidFile> s_owners =
+            new Dictionary<string, PidFile>(createPathComparer());
 
-        private readonly object _lock = new object();
-        private readonly string _fPath;
-        private readonly PidRecord _rec;
-        private readonly long _stt; // Start time tolerance in ticks (100 ns)
+        private readonly object _syncRoot = new object();
+        private readonly long _startTimeToleranceTicks;
 
         private bool _disposed;
-        private FileStream? _fs;
-        private bool _usesNativeLock;
+        private FileStream? _fileStream;
+        private FileStream? _macOsLockStream;
 
         /// <summary>
         /// Initializes a new instance for the current process.
@@ -152,7 +150,7 @@ namespace PidFile.NET {
         public PidFile(
             string filePath,
             TimeSpan? startTimeTolerance = null)
-            : this(filePath, readSelf(), startTimeTolerance) {
+            : this(filePath, readCurrentProcessIdentity(), startTimeTolerance) {
         }
 
         // Test seam: lets tests simulate PID reuse deterministically. Expose
@@ -190,35 +188,29 @@ namespace PidFile.NET {
                     nameof(self));
             }
 
-            TimeSpan tolerance = startTimeTolerance ?? DEFAULT_TOLERANCE;
+            TimeSpan tolerance = startTimeTolerance ?? s_defaultTolerance;
             if (tolerance < TimeSpan.Zero) {
                 throw new ArgumentOutOfRangeException(
                     nameof(startTimeTolerance),
                     "Start time tolerance must be non-negative.");
             }
 
-            _fPath = Path.GetFullPath(filePath);
-            _rec = new PidRecord(self.Pid, self.Start);
-            _stt = tolerance.Ticks;
+            FilePath = Path.GetFullPath(filePath);
+            Record = new PidRecord(self.Pid, self.Start);
+            _startTimeToleranceTicks = tolerance.Ticks;
         }
 
-        #region Properties
+        /// <inheritdoc/>
+        public string FilePath { get; }
 
         /// <inheritdoc/>
-        public string FilePath { get => _fPath; }
-
-        /// <inheritdoc/>
-        public PidRecord Record { get => _rec; }
-
-        #endregion
-
-        #region Public Methods
+        public PidRecord Record { get; }
 
         /// <inheritdoc/>
         public bool TryAcquire() {
-            lock (_lock) {
+            lock (_syncRoot) {
                 throwIfDisposed();
-                if (_fs != null) {
+                if (_fileStream != null) {
                     throw new InvalidOperationException(
                         "The PID file is already acquired.");
                 }
@@ -226,39 +218,48 @@ namespace PidFile.NET {
                 // In-process exclusion first. No file is opened (and later
                 // closed) when this process already owns the path, so we can
                 // never drop the owner's fcntl lock by accident.
-                lock (REGISTRY_GATE) {
-                    if (OWNERS.ContainsKey(_fPath)) {
+                lock (s_registryGate) {
+                    if (s_owners.ContainsKey(FilePath)) {
                         return false;
                     }
-                    OWNERS.Add(_fPath, this);
+                    s_owners.Add(FilePath, this);
                 }
 
                 FileStream? fs = null;
+                FileStream? macOsLockStream = null;
                 bool acquired = false;
                 try {
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                        macOsLockStream = tryMacOsLock();
+                        if (macOsLockStream == null) {
+                            return false;
+                        }
+                    }
+
                     // Errors here (missing directory, permissions, disk) are
                     // real errors and propagate to the caller.
                     fs = new FileStream(
-                        path: _fPath,
+                        path: FilePath,
                         mode: FileMode.OpenOrCreate,
                         access: FileAccess.ReadWrite,
                         share: FileShare.ReadWrite | FileShare.Delete,
                         bufferSize: BUFFER_SIZE);
 
-                    if (!tryLock(fs)) {
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                        && !tryLock(fs)) {
                         return false;
                     }
-                    _usesNativeLock = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-
                     // We hold the lock: whatever the file contained is stale.
                     writeRecord(fs);
-                    _fs = fs;
+                    _fileStream = fs;
+                    _macOsLockStream = macOsLockStream;
                     acquired = true;
                     return true;
                 } finally {
                     if (!acquired) {
                         fs?.Dispose();
-                        unregister();
+                        macOsLockStream?.Dispose();
+                        unregisterOwner();
                     }
                 }
             }
@@ -288,12 +289,12 @@ namespace PidFile.NET {
                 return new PidFileInspection(PidFileStatus.Malformed, null);
             }
 
-            return verify(record.Value);
+            return verifyRecord(record.Value);
         }
 
         /// <inheritdoc/>
         public bool TryRelease() {
-            lock (_lock) {
+            lock (_syncRoot) {
                 throwIfDisposed();
                 return releaseCore();
             }
@@ -301,7 +302,7 @@ namespace PidFile.NET {
 
         /// <inheritdoc/>
         public void Dispose() {
-            lock (_lock) {
+            lock (_syncRoot) {
                 if (_disposed) {
                     return;
                 }
@@ -315,12 +316,8 @@ namespace PidFile.NET {
             }
         }
 
-        #endregion
-
-        #region Private Methods
-
         private bool releaseCore() {
-            FileStream? fs = _fs;
+            FileStream? fs = _fileStream;
             if (fs == null) {
                 return false;
             }
@@ -337,24 +334,27 @@ namespace PidFile.NET {
                     // owner and fails verification anyway.
                 }
 
-                unlock(fs);
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                    unlock(fs);
+                }
             } finally {
-                _fs = null;
-                _usesNativeLock = false;
+                _fileStream = null;
                 fs.Dispose();
+                _macOsLockStream?.Dispose();
+                _macOsLockStream = null;
 
                 // Unregister only after the descriptor is closed. Otherwise
                 // another instance could lock the file first and our close
                 // would drop ITS lock (POSIX semantics).
-                unregister();
+                unregisterOwner();
             }
             return true;
         }
 
         private void writeRecord(FileStream fs) {
-            string text = _rec.ProcessId.ToString("D", CultureInfo.InvariantCulture)
+            string text = Record.ProcessId.ToString("D", CultureInfo.InvariantCulture)
                 + "\n"
-                + _rec.StartTimeUtc.ToFileTimeUtc().ToString("D", CultureInfo.InvariantCulture)
+                + Record.StartTimeUtc.ToFileTimeUtc().ToString("D", CultureInfo.InvariantCulture)
                 + "\n";
             byte[] bytes = Encoding.ASCII.GetBytes(text);
 
@@ -366,10 +366,6 @@ namespace PidFile.NET {
         }
 
         private static bool tryLock(FileStream fs) {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                return tryNativeLock(fs);
-            }
-
             try {
                 fs.Lock(LOCK_POSITION, LOCK_LENGTH);
                 return true;
@@ -380,40 +376,25 @@ namespace PidFile.NET {
             } catch (UnauthorizedAccessException) {
                 // Some platforms report a lock conflict this way.
                 return false;
-            } catch (PlatformNotSupportedException) when (
-                RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                return tryNativeLock(fs);
             }
         }
 
-        private static bool tryNativeLock(FileStream fs) {
-            int result = flock(
-                fs.SafeFileHandle.DangerousGetHandle(),
-                LOCK_EX | LOCK_NB);
-            if (result == 0) {
-                return true;
+        private FileStream? tryMacOsLock() {
+            try {
+                return new FileStream(
+                    path: FilePath + ".lock",
+                    mode: FileMode.OpenOrCreate,
+                    access: FileAccess.ReadWrite,
+                    share: FileShare.None,
+                    bufferSize: BUFFER_SIZE);
+            } catch (IOException ex) when (!isPathProblem(ex)) {
+                return null;
+            } catch (UnauthorizedAccessException) {
+                return null;
             }
-
-            int error = Marshal.GetLastWin32Error();
-            if (error == EWOULDBLOCK) {
-                return false;
-            }
-
-            throw new IOException(
-                "The PID file could not be locked.",
-                new Win32Exception(error));
         }
 
         private void unlock(FileStream fs) {
-            if (_usesNativeLock) {
-                if (flock(
-                    fs.SafeFileHandle.DangerousGetHandle(),
-                    LOCK_UN) != 0) {
-                    // Closing the stream releases the lock anyway.
-                }
-                return;
-            }
-
             try {
                 fs.Unlock(LOCK_POSITION, LOCK_LENGTH);
             } catch (IOException) {
@@ -426,11 +407,11 @@ namespace PidFile.NET {
             // stream. Opening and closing another descriptor here would
             // silently drop that owner's fcntl lock on Unix.
             PidFile? owner;
-            lock (REGISTRY_GATE) {
-                OWNERS.TryGetValue(_fPath, out owner);
+            lock (s_registryGate) {
+                s_owners.TryGetValue(FilePath, out owner);
             }
             if (owner != null) {
-                byte[]? own = owner.readOwnBytes();
+                byte[]? own = owner.readOwnedRecordBytes();
                 if (own != null) {
                     return own;
                 }
@@ -438,7 +419,7 @@ namespace PidFile.NET {
             }
 
             using (FileStream fs = new FileStream(
-                path: _fPath,
+                path: FilePath,
                 mode: FileMode.Open,
                 access: FileAccess.Read,
                 share: FileShare.ReadWrite | FileShare.Delete,
@@ -447,12 +428,12 @@ namespace PidFile.NET {
             }
         }
 
-        private byte[]? readOwnBytes() {
-            lock (_lock) {
-                if (_fs == null) {
+        private byte[]? readOwnedRecordBytes() {
+            lock (_syncRoot) {
+                if (_fileStream == null) {
                     return null;
                 }
-                return readAll(_fs);
+                return readAll(_fileStream);
             }
         }
 
@@ -484,10 +465,10 @@ namespace PidFile.NET {
             // "<pid>\n<filetime>\n" splits into three parts, the last one empty.
             string[] lines = Encoding.ASCII.GetString(data).Split('\n');
             int count = lines.Length;
-            if (count == RECORD_LINES + 1 && lines[RECORD_LINES].Length == 0) {
-                count = RECORD_LINES;
+            if (count == RECORD_LINE_COUNT + 1 && lines[RECORD_LINE_COUNT].Length == 0) {
+                count = RECORD_LINE_COUNT;
             }
-            if (count != RECORD_LINES) {
+            if (count != RECORD_LINE_COUNT) {
                 return null;
             }
 
@@ -512,13 +493,13 @@ namespace PidFile.NET {
             return new PidRecord(pid, startUtc);
         }
 
-        private PidFileInspection verify(PidRecord record) {
+        private PidFileInspection verifyRecord(PidRecord record) {
             try {
                 // The RECORDED pid, not our own.
                 using (Process process = Process.GetProcessById(record.ProcessId)) {
                     long actual = process.StartTime.ToFileTimeUtc();
                     long diff = Math.Abs(actual - record.StartTimeUtc.ToFileTimeUtc());
-                    PidFileStatus status = diff <= _stt
+                    PidFileStatus status = diff <= _startTimeToleranceTicks
                         ? PidFileStatus.OwnerAlive
                         : PidFileStatus.OwnerGone;
                     return new PidFileInspection(status, record);
@@ -537,34 +518,26 @@ namespace PidFile.NET {
             }
         }
 
-        private void unregister() {
-            lock (REGISTRY_GATE) {
-                if (OWNERS.TryGetValue(_fPath, out PidFile? owner)
+        private void unregisterOwner() {
+            lock (s_registryGate) {
+                if (s_owners.TryGetValue(FilePath, out PidFile? owner)
                     && ReferenceEquals(owner, this)) {
-                    OWNERS.Remove(_fPath);
+                    s_owners.Remove(FilePath);
                 }
             }
         }
 
-        private static (int Pid, DateTime Start) readSelf() {
+        private static (int Pid, DateTime Start) readCurrentProcessIdentity() {
             using (Process self = Process.GetCurrentProcess()) {
                 return (self.Id, self.StartTime.ToUniversalTime());
             }
         }
 
-        private static StringComparer pathComparer() {
+        private static StringComparer createPathComparer() {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? StringComparer.OrdinalIgnoreCase
                 : StringComparer.Ordinal;
         }
-
-        private const int LOCK_EX = 2;
-        private const int LOCK_NB = 4;
-        private const int LOCK_UN = 8;
-        private const int EWOULDBLOCK = 35;
-
-        [DllImport("libc", EntryPoint = "flock", SetLastError = true)]
-        private static extern int flock(IntPtr fileDescriptor, int operation);
 
         // DirectoryNotFoundException & co. derive from IOException but mean
         // "bad path", not "transient I/O problem". Do not swallow them.
@@ -579,7 +552,5 @@ namespace PidFile.NET {
                 throw new ObjectDisposedException(nameof(PidFile));
             }
         }
-
-        #endregion
     }
 }
