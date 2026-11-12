@@ -366,6 +366,10 @@ namespace PidFile.NET {
         }
 
         private static bool tryLock(FileStream fs) {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                return tryNativeLock(fs);
+            }
+
             try {
                 fs.Lock(LOCK_POSITION, LOCK_LENGTH);
                 return true;
