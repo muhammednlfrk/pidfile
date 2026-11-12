@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PidFile.NET\PidFile.NET.csproj" />
+    <ProjectReference Include="..\PidFile.NET.Tests.Helper\PidFile.NET.Tests.Helper.csproj" />
   </ItemGroup>
 
 </Project>

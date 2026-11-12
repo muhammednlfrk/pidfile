@@ -192,6 +192,7 @@ dotnet_code_quality.api_surface = all
 dotnet_code_quality.ca1802.api_surface = private, internal
 dotnet_code_quality.ca1822.api_surface = private, internal
 dotnet_code_quality.ca2208.api_surface = public
+dotnet_code_quality.CA1707.api_surface = public
 
 ############################################################
 # Existing analyzer rules

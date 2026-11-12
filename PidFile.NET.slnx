@@ -4,5 +4,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PidFile.NET.Tests/PidFile.NET.Tests.csproj" />
+    <Project Path="tests/PidFile.NET.Tests.Helper/PidFile.NET.Tests.Helper.csproj" />
   </Folder>
 </Solution>
