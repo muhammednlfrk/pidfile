@@ -3,10 +3,13 @@
 All notable changes to PidFile.NET are documented here.
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-and [Semantic Versioning](https://semver.org/). No release has been published
-yet, so all current work is recorded under `Unreleased`.
+and [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+No changes yet.
+
+## [1.0.0] - 2026-11-13
 
 ### Added
 
@@ -39,4 +42,4 @@ yet, so all current work is recorded under `Unreleased`.
 
 ## Release history
 
-No releases have been published yet.
+- [1.0.0] - 2026-11-13

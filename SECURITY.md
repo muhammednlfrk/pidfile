@@ -2,11 +2,9 @@
 
 ## Project status
 
-PidFile.NET has not published a release yet. Until the first release, security
-fixes are applied to the default development branch.
+Supported versions:
 
-After the first release, this section will list the supported release
-versions.
+- 1.0.x
 
 ## Reporting a vulnerability
 

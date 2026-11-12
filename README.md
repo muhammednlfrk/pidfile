@@ -4,9 +4,6 @@
 [![License](https://img.shields.io/github/license/muhammednlfrk/pidfile-dotnet.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/blob/main/LICENSE)
 [![Target framework](https://img.shields.io/badge/target-netstandard2.1-512BD4.svg)](https://dotnet.microsoft.com/platform/dotnet-standard)
 
-> **Pre-release:** PidFile.NET has not been published to NuGet yet. The public
-> API and package metadata may change before the first release.
-
 PidFile.NET provides a cross-platform, single-instance guard backed by a PID
 file. It records the owning process ID and start time, uses an operating-system
 lock to prevent concurrent ownership, and detects stale records after a crash
@@ -25,8 +22,11 @@ or PID reuse.
 
 ## Installation
 
-The first NuGet release is not available yet. To use the library from source,
-reference the project from your solution or build the repository locally.
+Install the package from NuGet:
+
+```bash
+dotnet add package PidFile.NET --version 1.0.0
+```
 
 The package targets `netstandard2.1`; .NET Framework is not supported.
 

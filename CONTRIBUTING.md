@@ -4,8 +4,8 @@ Thanks for your interest in PidFile.NET!
 
 ## Project status
 
-PidFile.NET is pre-release and has not been published to NuGet. Public APIs,
-package metadata, and documentation may change before the first release.
+PidFile.NET is published on NuGet. Public API changes follow semantic
+versioning and are documented in the changelog.
 
 ## Setup
 
