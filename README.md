@@ -1,5 +1,11 @@
 # PidFile.NET
 
+[![CI](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/PidFile.NET.svg)](https://www.nuget.org/packages/PidFile.NET/)
+[![NuGet downloads](https://img.shields.io/nuget/dt/PidFile.NET.svg)](https://www.nuget.org/packages/PidFile.NET/)
+[![License](https://img.shields.io/github/license/muhammednlfrk/pidfile-dotnet.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/blob/main/LICENSE)
+[![Target framework](https://img.shields.io/badge/target-netstandard2.1-512BD4.svg)](https://dotnet.microsoft.com/platform/dotnet-standard)
+
 PidFile.NET helps you create and manage process ID (PID) files. It is
 designed for desktop, command-line, worker, and ASP.NET applications that
 should allow only one running instance.
@@ -14,7 +20,16 @@ The lock is held on the same file as the record, while the record remains
 readable by other processes. If the owner process exits unexpectedly, the
 operating system releases the lock and the next process can acquire it.
 
-[![CI](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml)
+## Features
+
+- Non-blocking, cross-process single-instance ownership.
+- Same-process ownership protection for multiple `PidFile` instances.
+- Stale-record detection using the process ID and process start time.
+- Readable PID records while another process holds the lock.
+- Native advisory locking on macOS and byte-range locking on other supported
+  platforms.
+- `netstandard2.1` support for .NET Core 3.0+, .NET 5+, Mono, and Unity
+  2021.2+.
 
 ## Installation
 
@@ -22,8 +37,8 @@ operating system releases the lock and the next process can acquire it.
 dotnet add package PidFile.NET
 ```
 
-Targets `netstandard2.1` (.NET Core 3.0+, .NET 5+, Mono, and Unity 2021.2+).
-.NET Framework is not supported.
+The package targets `netstandard2.1` (.NET Core 3.0+, .NET 5+, Mono, and Unity
+2021.2+). .NET Framework is not supported.
 
 ## Usage
 

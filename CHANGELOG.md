@@ -19,6 +19,8 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 - Ownership is enforced with an operating-system file lock while keeping the
   record readable by other processes.
+- macOS uses native advisory whole-file locking because byte-range locking is
+  not supported there; other supported platforms use byte-range locking.
 - Stale records are detected using both the recorded process ID and start time,
   allowing a new owner to safely replace them after a crash or PID reuse.
 - Public API changes are tracked with the shipped and unshipped API files.
