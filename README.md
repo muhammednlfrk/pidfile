@@ -1,6 +1,9 @@
 # PidFile.NET
 
 [![CI](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/PidFile.NET.svg)](https://www.nuget.org/packages/PidFile.NET)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/PidFile.NET.svg)](https://www.nuget.org/packages/PidFile.NET)
+[![GitHub Release](https://img.shields.io/github/v/release/muhammednlfrk/pidfile-dotnet)](https://github.com/muhammednlfrk/pidfile-dotnet/releases)
 [![License](https://img.shields.io/github/license/muhammednlfrk/pidfile-dotnet.svg)](https://github.com/muhammednlfrk/pidfile-dotnet/blob/main/LICENSE)
 [![Target framework](https://img.shields.io/badge/target-netstandard2.1-512BD4.svg)](https://dotnet.microsoft.com/platform/dotnet-standard)
 
