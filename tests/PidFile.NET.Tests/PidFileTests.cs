@@ -322,6 +322,7 @@ namespace PidFile.NET.Tests {
         [InlineData("-5\n1\n")]
         [InlineData("0\n1\n")]
         [InlineData("1\n-1\n")]
+        [InlineData("1\n9223372036854775807\n")]
         [InlineData("1\n99999999999999999999\n")]
         [InlineData("1\n2\n3\n")]
         public void Inspect_MalformedRecord_ReturnsMalformed(string content) {
