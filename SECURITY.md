@@ -1,17 +1,25 @@
 # Security Policy
 
-## Supported versions
+## Project status
 
-Only the latest released version receives security fixes.
+PidFile.NET has not published a release yet. Until the first release, security
+fixes are applied to the default development branch.
+
+After the first release, this section will list the supported release
+versions.
 
 ## Reporting a vulnerability
 
-Please do not open a public issue for security problems.
+Please do not open a public issue for a security vulnerability.
 
-Use GitHub's private vulnerability reporting: open the repository's **Security**
-tab and choose **Report a vulnerability**.
-(This must be enabled once in the repository's security settings.)
+Use GitHub's private vulnerability reporting: open the repository's
+**Security** tab and choose **Report a vulnerability**. Include:
 
-Include a description, reproduction steps, and the affected version. You can
-expect an initial response within a reasonable time, and credit in the release
-notes if you wish.
+- a description of the vulnerability;
+- the affected commit or version;
+- reproduction steps or a proof of concept; and
+- the potential impact.
+
+If private vulnerability reporting is unavailable, contact the repository
+maintainer privately through GitHub rather than posting sensitive details
+publicly.

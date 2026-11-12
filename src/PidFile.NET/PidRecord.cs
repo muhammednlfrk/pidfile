@@ -2,8 +2,8 @@ using System;
 
 namespace PidFile.NET {
     /// <summary>
-    /// Represents a record in a PID file, containing the process ID and the
-    /// start time of the process.
+    /// Represents a PID file record containing the process ID and process start
+    /// time.
     /// </summary>
     public readonly struct PidRecord {
         /// <summary>

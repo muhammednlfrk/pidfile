@@ -2,11 +2,16 @@
 
 Thanks for your interest in PidFile.NET!
 
+## Project status
+
+PidFile.NET is pre-release and has not been published to NuGet. Public APIs,
+package metadata, and documentation may change before the first release.
+
 ## Setup
 
 1. Install the .NET SDK version listed in `global.json` (newer feature bands are
 accepted).
-2. `dotnet restore && dotnet build && dotnet test`
+2. Run `dotnet restore`, `dotnet build`, and `dotnet test`.
 
 ## Code style
 
@@ -18,7 +23,7 @@ Style is defined in `.editorconfig` and enforced in CI. Key rules:
 private/internal static fields `s_camelCase`.
 - Library code must be compatible with `netstandard2.1` and C# 8.0
 (`LangVersion` is pinned in `src/Directory.Build.props`).
-- Library code uses `ConfigureAwait(false)` on awaited tasks.
+- Keep public API documentation in sync with the implementation.
 
 Before pushing, run:
 

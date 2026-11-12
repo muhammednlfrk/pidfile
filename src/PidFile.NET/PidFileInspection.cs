@@ -21,7 +21,8 @@ namespace PidFile.NET {
         public PidRecord? Record { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PidFileInspection"/> struct
+        /// Initializes a new instance of the <see cref="PidFileInspection"/>
+        /// struct.
         /// </summary>
         /// <param name="status">
         /// The status of the PID file inspection.

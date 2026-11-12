@@ -14,7 +14,7 @@ namespace PidFile.NET {
         Malformed,
 
         /// <summary>
-        /// Process id and start time are valid and the process is currently
+        /// Process ID and start time are valid and the process is currently
         /// running.
         /// </summary>
         OwnerAlive,
