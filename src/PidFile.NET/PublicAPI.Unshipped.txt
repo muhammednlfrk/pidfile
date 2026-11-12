@@ -9,7 +9,7 @@ PidFile.NET.PidFile
 PidFile.NET.PidFile.Dispose() -> void
 PidFile.NET.PidFile.FilePath.get -> string!
 PidFile.NET.PidFile.Inspect() -> PidFile.NET.PidFileInspection
-PidFile.NET.PidFile.PidFile(string! filePath, int processId, System.DateTime startTimeUtc, System.TimeSpan? startTimeTolerance = null, bool sync = true) -> void
+PidFile.NET.PidFile.PidFile(string! filePath, System.TimeSpan? startTimeTolerance = null) -> void
 PidFile.NET.PidFile.Record.get -> PidFile.NET.PidRecord
 PidFile.NET.PidFile.TryAcquire() -> bool
 PidFile.NET.PidFile.TryRelease() -> bool
@@ -25,7 +25,7 @@ PidFile.NET.PidFileStatus.OwnerAlive = 2 -> PidFile.NET.PidFileStatus
 PidFile.NET.PidFileStatus.OwnerGone = 3 -> PidFile.NET.PidFileStatus
 PidFile.NET.PidFileStatus.Unverifiable = 4 -> PidFile.NET.PidFileStatus
 PidFile.NET.PidRecord
-PidFile.NET.PidRecord.Pid.get -> int
 PidFile.NET.PidRecord.PidRecord() -> void
 PidFile.NET.PidRecord.PidRecord(int pid, System.DateTime startTimeUtc) -> void
+PidFile.NET.PidRecord.ProcessId.get -> int
 PidFile.NET.PidRecord.StartTimeUtc.get -> System.DateTime

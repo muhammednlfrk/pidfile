@@ -9,7 +9,7 @@ namespace PidFile.NET {
         /// <summary>
         /// The process ID (PID).
         /// </summary>
-        public int Pid { get; }
+        public int ProcessId { get; }
 
         /// <summary>
         /// The start time of the process in UTC.
@@ -27,7 +27,7 @@ namespace PidFile.NET {
         /// The start time of the process in UTC.
         /// </param>
         public PidRecord(int pid, DateTime startTimeUtc) {
-            Pid = pid;
+            ProcessId = pid;
             StartTimeUtc = startTimeUtc;
         }
     }
