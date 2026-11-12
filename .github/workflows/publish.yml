@@ -18,8 +18,9 @@ jobs:
     # Optional: create a "release" environment in repo settings to require manual approval before publishing.
     environment: release
     permissions:
-      contents: read
+      contents: write # required for creating the GitHub release
       id-token: write # required for the OIDC exchange with nuget.org
+      packages: write # required for publishing to GitHub Packages
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,3 +62,19 @@ jobs:
           --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
+
+      - name: Push to GitHub Packages
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          --skip-duplicate
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create "$GITHUB_REF_NAME"
+          --verify-tag
+          --title "PidFile.NET $GITHUB_REF_NAME"
+          --generate-notes
